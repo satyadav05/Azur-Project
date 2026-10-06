@@ -1,0 +1,116 @@
+# Create the Custom VPC
+resource "aws_vpc" "custom_vpc" {
+  cidr_block           = "10.10.0.0/16"
+  enable_dns_support   = true
+  enable_dns_hostnames = true
+
+  tags = {
+    Name = "DEV-VPC"
+  }
+}
+
+# Create a Public Subnet1
+resource "aws_subnet" "public_subnet1" {
+  vpc_id                  = aws_vpc.custom_vpc.id
+  cidr_block              = "10.10.10.0/24"
+  availability_zone       = "us-east-1a"
+  map_public_ip_on_launch = true # Automatically assigns public IPs to instances
+
+  tags = {
+    Name = "PUB1-DEV"
+  }
+}
+
+# Create a Public Subnet2
+resource "aws_subnet" "public_subnet2" {
+  vpc_id                  = aws_vpc.custom_vpc.id
+  cidr_block              = "10.10.15.0/24"
+  availability_zone       = "us-east-1b"
+  map_public_ip_on_launch = true # Automatically assigns public IPs to instances
+
+  tags = {
+    Name = "PUB2-DEV"
+  }
+}
+
+# Create a Private Subnet1
+resource "aws_subnet" "private_subnet1" {
+  vpc_id                  = aws_vpc.custom_vpc.id
+  cidr_block              = "10.10.20.0/24"
+  availability_zone       = "us-east-1c"
+  map_public_ip_on_launch = false # Automatically assigns public IPs to instances
+
+  tags = {
+    Name = "PVT1-DEV"
+  }
+}
+
+# Create a Private Subnet2
+resource "aws_subnet" "private_subnet2" {
+  vpc_id                  = aws_vpc.custom_vpc.id
+  cidr_block              = "10.10.25.0/24"
+  availability_zone       = "us-east-1d"
+  map_public_ip_on_launch = false # Automatically assigns public IPs to instances
+
+  tags = {
+    Name = "PVT2-DEV"
+  }
+}
+
+
+# Create an Internet Gateway
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.custom_vpc.id
+
+  tags = {
+    Name = "DEV-IGW"
+  }
+}
+
+# Create a Route Table for Public Traffic
+resource "aws_route_table" "public_rt" {
+  vpc_id = aws_vpc.custom_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+  }
+
+  tags = {
+    Name = "PUB-DEV-RT"
+  }
+}
+
+# Create a Route Table for Private Traffic
+resource "aws_route_table" "private_rt" {
+  vpc_id = aws_vpc.custom_vpc.id
+
+  tags = {
+    Name = "PVT-DEV-RT"
+  }
+}
+
+
+# Associate the Route Table with the Public Subnet1
+resource "aws_route_table_association" "public_rt1_ass" {
+  subnet_id      = aws_subnet.public_subnet1.id
+  route_table_id = aws_route_table.public_rt.id
+}
+
+# Associate the Route Table with the Public Subnet2
+resource "aws_route_table_association" "public_rt2_ass" {
+  subnet_id      = aws_subnet.public_subnet2.id
+  route_table_id = aws_route_table.public_rt.id
+}
+
+# Associate the Route Table with the Private Subnet1
+resource "aws_route_table_association" "private_rt1_ass" {
+  subnet_id      = aws_subnet.private_subnet1.id
+  route_table_id = aws_route_table.private_rt.id
+}
+
+# Associate the Route Table with the Private Subnet2
+resource "aws_route_table_association" "private_rt2_ass" {
+  subnet_id      = aws_subnet.private_subnet2.id
+  route_table_id = aws_route_table.private_rt.id
+}
